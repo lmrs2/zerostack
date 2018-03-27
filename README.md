@@ -9,7 +9,7 @@ The setup below was tested on Ubuntu trust 14.04.5 LTS x86_64. I suggest you ins
 
 Pre-requesites:
 ---------------
-	1. Install a VM running Ubuntu trust 14.04.5 LTS x86_64.
+	1. Install a VM running Ubuntu trust 14.04.5 LTS x86_64. Allocate 32GB of disk.
 	2. $sudo apt-get install git cmake g++ binutils-dev
 	3. $sudo apt-get install gcc-multilib g++-multilib
 	4. $export BASE_DIR=/whereever/you/want
