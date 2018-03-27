@@ -18,8 +18,7 @@ Pre-requesites:
 Download, compile and install Clang/LLVM (function-based implementation):
 -----------------------------------------------------------
 	$git clone https://github.com/lmrs2/llvm.git -b zerostack_38 --single-branch --depth 1 
-	$cd llvm
-	$cd tools
+	$cd llvm/tools
 	$git clone https://github.com/lmrs2/clang.git -b zerostack_38 --single-branch --depth 1 
 	$cd ..
 	$mkdir build
