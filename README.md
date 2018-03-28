@@ -44,7 +44,9 @@ Download, compile and install musl-libc:
 ---------------------------------------
 	// First, recompile Clang/LLVM for libc. Note: this should be a compiler option in production build
 	$cd $LLVM_BUILD
-	$vi ../lib/Target/X86/X86ZeroStackPass.cpp // set static bool IsLibc = true;
+	// set:
+	// static bool IsLibc = true;
+	$vi ../lib/Target/X86/X86ZeroStackPass.cpp
 	$cmake --build . --target LLVMX86CodeGen && sudo make install
 	// Now deal with musl-libc
 	$cd $BASE_DIR
@@ -63,7 +65,9 @@ Recompile Clang/LLVM for non-libc:
 ----------------------------------
 	// recompile Clang/LLVM for non-libc. Note: this should be a compiler option in production build
 	$cd $LLVM_BUILD
-	$vi ../lib/Target/X86/X86ZeroStackPass.cpp // set static bool IsLibc = false;
+	// set:
+	// static bool IsLibc = false;
+	$vi ../lib/Target/X86/X86ZeroStackPass.cpp
 	$cmake --build . --target LLVMX86CodeGen && sudo make install
 
 Example (function-based):
