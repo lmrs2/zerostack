@@ -52,6 +52,7 @@ Download, compile and install musl-libc:
 	$cd $BASE_DIR
 	$export MUSL_BUILD=$BASE_DIR/musl-1.1.14
 	$git clone https://github.com/lmrs2/musl-1.1.14.git
+	$cd $MUSL_BUILD
 	$LIBCC=/usr/local/lib/linux/libclang_rt.builtins-x86_64.a CFLAGS="-D_ZEROSTACK_=1 -fno-optimize-sibling-calls"  CC=clang ./configure --disable-static
 	$make
 	// You will see a lot of warning messages starting with "#define TAG_MUSL...": these are tags we will use for the CG version, just ignore them for now.
