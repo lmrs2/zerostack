@@ -61,7 +61,7 @@ Download, compile and install musl-libc:
 
 Recompile Clang/LLVM for non-libc:
 ----------------------------------
-	// recompile Clang/LLVM for libc. Note: this should be a compiler option in production build
+	// recompile Clang/LLVM for non-libc. Note: this should be a compiler option in production build
 	$cd $LLVM_BUILD
 	$vi ../lib/Target/X86/X86ZeroStackPass.cpp // set static bool IsLibc = false;
 	$cmake --build . --target LLVMX86CodeGen && sudo make install
@@ -77,7 +77,12 @@ Recompile and install for stack-based implementation:
 -----------------------------------------------------
 	// Clang/LLVM
 	$cd $LLVM_BUILD
-	$vi ../lib/Target/X86/X86ZeroStackPass.cpp // set ZERO_EACH_FUNCTION to 0 and ZERO_WITH_STACKPOINT to 1 and ZERO_WITH_STACKPOINT_BULK_REG to 1
+	// set:
+	// #define ZERO_EACH_FUNCTION 0
+	// #define ZERO_EACH_FUNCTION_WITH_SIGNAL 0
+	// #define ZERO_WITH_STACKPOINT	1 
+	// #define ZERO_WITH_STACKPOINT_BULK_REG 1
+	$vi ../lib/Target/X86/X86ZeroStackPass.cpp
 	$cmake --build . --target LLVMX86CodeGen && sudo make install
 
 	// compiler_rt
@@ -86,7 +91,9 @@ Recompile and install for stack-based implementation:
 
 	// Clang/LLVM for libc
 	$cd $LLVM_BUILD
-	$vi ../lib/Target/X86/X86ZeroStackPass.cpp // set static bool IsLibc = true;
+	// set:
+	// static bool IsLibc = true;
+	$vi ../lib/Target/X86/X86ZeroStackPass.cpp 
 	$cmake --build . --target LLVMX86CodeGen && sudo make install
 
 	// musl-libc
@@ -95,10 +102,12 @@ Recompile and install for stack-based implementation:
 
 	// Clang/LLVM for arbitrary (non-libc) programs
 	$cd $LLVM_BUILD
-	$vi ../lib/Target/X86/X86ZeroStackPass.cpp // set static bool IsLibc = false;
+	// set:
+	// static bool IsLibc = false;
+	$vi ../lib/Target/X86/X86ZeroStackPass.cpp
 	$cmake --build . --target LLVMX86CodeGen && sudo make install
 
-Example (function-based):
+Example (stack-based):
 ------------------------
 	TODO
 	+ objdump
@@ -150,7 +159,12 @@ Recompile and install Clang/LLVM:
 --------------------------------------------------------
 	// Clang/LLVM
 	$cd $LLVM_BUILD
-	$vi ../lib/Target/X86/X86ZeroStackPass.cpp // set ZERO_WITH_CG to 1 and ZERO_WITH_CG_BULK_REG to 1 and ZERO_WITH_STACKPOINT to 0 and ZERO_WITH_STACKPOINT_BULK_REG to 0
+	// set:
+	// #define ZERO_WITH_STACKPOINT 0 
+	// #define ZERO_WITH_STACKPOINT_BULK_REG 0
+	// #define ZERO_WITH_CG 1 
+	// #define ZERO_WITH_CG_BULK_REG 1 
+	$vi ../lib/Target/X86/X86ZeroStackPass.cpp 
 	$cmake --build . --target LLVMX86CodeGen && sudo make install
 
 Re-Configure, compile and install compiler_rt:
@@ -165,7 +179,9 @@ Recompile Clang/LLVM for libc:
 ----------------------------------
 	// recompile Clang/LLVM for libc. Note: this should be a compiler option in production build
 	$cd $LLVM_BUILD
-	$vi ../lib/Target/X86/X86ZeroStackPass.cpp // set static bool IsLibc = true;
+	// set:
+	// static bool IsLibc = true;
+	$vi ../lib/Target/X86/X86ZeroStackPass.cpp 
 	$cmake --build . --target LLVMX86CodeGen && sudo make install
 
 Re-Configure, compile and install musl-libc:
@@ -187,17 +203,19 @@ Re-Configure, compile and install musl-libc:
 
 Recompile Clang/LLVM for non-libc:
 ----------------------------------
-	// recompile Clang/LLVM for libc. Note: this should be a compiler option in production build
+	// recompile Clang/LLVM for non-libc. Note: this should be a compiler option in production build
 	$cd $LLVM_BUILD
-	$vi ../lib/Target/X86/X86ZeroStackPass.cpp // set static bool IsLibc = true;
+	// set:
+	// static bool IsLibc = false;
+	$vi ../lib/Target/X86/X86ZeroStackPass.cpp
 	$cmake --build . --target LLVMX86CodeGen && sudo make install
 
-Example:
--------
+Example (callgraph-based):
+-------------------------
 	$CG-clang blabla -o main
 	// this generates a binary with code to zero stack and registers. However which registers to zero and what amount of stack to zero is done
-	// separately. This is because LLVM backend does not suppot module pass, so it only sees function one at a time and cannot
-	// compute the stack usage using call graph. The metafiles you saw earlier have this information instead; and the following python script
+	// separately. This is because LLVM backend does not suppot module pass, so it only sees functions one at a time and cannot
+	// determine the call graph to compute the stack usage. The metafiles you saw earlier have this information instead; and the following python script
 	// patches the binary
-	$python patchme.py --inobject=main --outobject=main-patched --inmetafiles=/usr/local/musl/metafiles/musl-libc-machine.mt,/tmp/metafile_pass.machine --libc=musl --platform=x86_64 --signal-stack-use=4096 --bulk-register-zeroing
+	$python patchme.py --inobject=main-unpatched --outobject=main-patched --inmetafiles=/usr/local/musl/metafiles/musl-libc-machine.mt,/tmp/metafile_pass.machine --libc=musl --platform=x86_64 --signal-stack-use=4096 --bulk-register-zeroing
 	$./main-patched
