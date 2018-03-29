@@ -71,9 +71,45 @@ Recompile Clang/LLVM for non-libc:
 
 Example (function-based):
 ------------------------
-	TODO
-	+ objdump
+	$cd $BASE_DIR
+	$mkdir examples && cd examples
+	$export EXAMPLES_DIR=`pwd`
+	$vi function-based-main.c
 
+Consider code below:
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+
+int foo(int a) {
+	if ( a == 2) {
+		printf("Winner\n");
+		return 0;
+	}
+	if (a > 0) return -1;
+	return -2;
+}
+
+int main(int argc, char * argv[]) {
+
+	if ( !(argc > 1) ) {
+		printf("Usage: %s <num>\n", argv[0]);
+		return -1;
+	}
+
+	int v = atoi(argv[1]);
+	int ret = foo(v);
+	return ret;
+}
+```
+	// Compile as
+	$musl-clang function-based-main.c -o function-based-main
+	$./function-based-main
+	// every function now zeros registers and stack before the return instruction
+	$objdump -d function-based-main
+	# check linking dependencies
+	$musl-ldd function-based-main
 
 
 Recompile and install for stack-based implementation:
@@ -111,11 +147,48 @@ Recompile and install for stack-based implementation:
 	$cmake --build . --target LLVMX86CodeGen && sudo make install
 
 Example (stack-based):
-------------------------
-	TODO
-	+ objdump
+----------------------
+	$cd $EXAMPLES_DIR
+	$vi stack-based-main.c
 
-Now let's try the callgraph-based implementation/
+Consider code below:
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+
+// only functions annotated with __sensitive will erase their stack/registers
+#define __sensitive __attribute__((annotate("SENSITIVE")))
+
+__sensitive int foo(int a) {
+	if ( a == 2) {
+		printf("Winner\n");
+		return 0;
+	}
+	if (a > 0) return -1;
+	return -2;
+}
+
+int main(int argc, char * argv[]) {
+
+	if ( !(argc > 1) ) {
+		printf("Usage: %s <num>\n", argv[0]);
+		return -1;
+	}
+
+	int v = atoi(argv[1]);
+	int ret = foo(v);
+	return ret;
+}
+```
+	// Compile as
+	$musl-clang stack-based-main.c -o stack-based-main
+	$./stack-based-main
+	// functions marked as \_\_sensitive zero registers and stack before the return instruction
+	// all functions keep track of the stack usage - but do not erase it
+	$objdump -d stack-based-main
+
+Now let's try the callgraph-based implementation.
 
 Install Gold linker (needed for LTO -- see http://llvm.org/docs/GoldPlugin.html):
 --------------------------------------------------------------------------------
@@ -130,7 +203,7 @@ Install Gold linker (needed for LTO -- see http://llvm.org/docs/GoldPlugin.html)
 	// If it complains "unrecognized option '-plugin'", then you're using ld.bfd
 	// It it says "-plugin: missing argument", then you're good
 	// You may need to set the linker to the Gold linker thru a symbolic link, eg:
-	$sudo ln -s /usr/bin/ld.gold /use/bin/ld 
+	$sudo rm /usr/bin/ld && sudo ln -s /usr/bin/ld.gold /usr/bin/ld 
 
 
 Install python module dependencies:
@@ -141,9 +214,9 @@ Install python module dependencies:
 	$git clone https://github.com/isislab/dispatch.git
 	$cd dispatch
 	$sudo python setup.py install
-	// if the capstone installation fails, then
+	// if the capstone installation fails, then do this instead
+	// or if you know a cleaner way to install dispatch, go ahead and let me know :)
 	$sudo pip install capstone
-	TODO: test
 
 Download, compile and install additional passes:
 -----------------------------------------------
@@ -151,12 +224,11 @@ Download, compile and install additional passes:
 	$cd $BASE_DIR
 	$git clone https://github.com/lmrs2/zerostack-callgraph.git
 	$cd zerostack-callgraph/examples/fpointer
-	$make
-	$sudo make install
+	$make && sudo make install
 	// the above command installs
 	//	1. CG-clang for compiling programs
 	//	2. cg-compiler for compiling musl libc
-	/ 	3. create dummy empty file /tmp/metafile_pass
+	// 	3. create dummy empty file /tmp/metafile_pass
 
 Recompile and install Clang/LLVM:
 --------------------------------------------------------
@@ -190,8 +262,8 @@ Recompile Clang/LLVM for libc:
 Re-Configure, compile and install musl-libc:
 --------------------------------------------
 	$cd $MUSL_BUILD
-	$cp Makefile.flto Makefile
 	$make clean
+	$cp Makefile.flto Makefile
 	$LIBCC=/usr/local/lib/linux/libclang_rt.builtins-x86_64.a  CFLAGS="-D_ZEROSTACK_=1 -fno-optimize-sibling-calls -O3"  CC=cg-compiler ./configure --disable-static
 	$make clean
 	$make
@@ -215,10 +287,75 @@ Recompile Clang/LLVM for non-libc:
 
 Example (callgraph-based):
 -------------------------
-	$CG-clang blabla -o main
-	// this generates a binary with code to zero stack and registers. However which registers to zero and what amount of stack to zero is done
+	$cd $EXAMPLES_DIR
+	$vi hash.c
+```c
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "common.h"
+
+__attr_hash_init void sha256_init(char *b, size_t len) {
+  printf("sha256_init\n");
+}
+
+__attr_hash_init void sha512_init(char *b, size_t len) {
+  printf("sha512_init\n");
+}
+
+```
+	$vi callgraph-based-main.c
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include "common.h"
+
+__attr_zerostack int main(int argc, char **argv)
+{
+   if (!(argc > 1)) {
+     return -1;
+   }
+   hash_init func = NULL;
+   int val = atoi(argv[1]);
+   
+   if (val == 4) func = &sha256_init;
+   else if (val > 5) func = &sha512_init;
+
+   if (func) (*func)(argv[1], val);
+
+   return 0;
+}
+
+```
+	$vi common.h
+```c
+#pragma once
+
+// sensitive functions to zero stack
+#define __attr_zerostack __attribute__((annotate("SENSITIVE")))
+
+// some annotations for callgraph
+#define __attr_hash_init  __attribute__((type_annotate("hash_init")))
+#define __attr_hash_init2  __attribute__((type_annotate("hash_init2")))
+
+// this function pointer is annotated with __attr_hash_init
+typedef __attr_hash_init void (*hash_init)(char *, size_t);
+
+// those functions are annotated as __attr_hash_init
+extern __attr_hash_init void sha256_init(char *b, size_t len);
+extern __attr_hash_init void sha512_init(char *b, size_t len);
+```
+	$CG-clang -c -O3 -flto hash.c -o hash.o
+	$CG-clang -c -O3 -flto callgraph-based-main.c -o callgraph-based-main.o
+	$CG-clang -O3 -flto -o callgraph-based-main-unpatched callgraph-based-main.o hash.o
+	// this generates:
+	//	1. a file /tmp/metafile_pass.machine which contains callgraph info with registers and stack amount used
+	// 	2. a binary with code to zero stack and registers. However which registers to zero and what amount of stack to zero is done
 	// separately. This is because LLVM backend does not suppot module pass, so it only sees functions one at a time and cannot
 	// determine the call graph to compute the stack usage. The metafiles you saw earlier have this information instead; and the following python script
 	// patches the binary
-	$python patchme.py --inobject=main-unpatched --outobject=main-patched --inmetafiles=/usr/local/musl/metafiles/musl-libc-machine.mt,/tmp/metafile_pass.machine --libc=musl --platform=x86_64 --signal-stack-use=4096 --bulk-register-zeroing
-	$./main-patched
+	$python $BASE_DIR/zerostack-callgraph/examples/fpointer/patchme.py --help
+	$python $BASE_DIR/zerostack-callgraph/examples/fpointer/patchme.py --inobject=callgraph-based-main-unpatched --outobject=callgraph-based-main-patched --inmetafiles=/usr/local/musl/metafiles/musl-libc-machine.mt,/tmp/metafile_pass.machine --libc=musl --platform=x86_64 --signal-stack-use=4096 --bulk-register-zeroing
+	$./callgraph-based-main-patched
+	$ovjdump -d callgraph-based-main-patched
+
