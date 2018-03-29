@@ -32,7 +32,6 @@ Download, compile and install compiler_rt:
 -----------------------------------------
 	$cd $LLVM_SRC/projects
 	$git clone https://github.com/llvm-mirror/compiler-rt.git -b release_38 --single-branch --depth 1
-	$cd compiler-rt
 	$mkdir build && cd build
 	$cmake -DCMAKE_C_COMPILER="clang" -DCMAKE_C_FLAGS="-fPIC" -DCOMPILER_RT_BUILD_SANITIZERS=OFF ../compiler-rt
 	$make
