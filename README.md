@@ -5,11 +5,11 @@ This project contains Clang/LLVM patches/passes to zero the stack and registers 
 available at [TODO]. The code is a reference implementation, and is not supposed to be production ready. Nevertheless, 
 this should be ebough for anyone who wants to test it.
 
-The setup below was tested on Ubuntu trust 14.04.5 LTS x86_64. I suggest you install this as a VM before reading further.
+The setup below was tested on Ubuntu trusty 14.04.5 LTS x86_64. I suggest you install this as a VM before reading further.
 
 Pre-requesites:
 ---------------
-	1. Install a VM running Ubuntu trust 14.04.5 LTS x86_64. Allocate 32GB of disk.
+	1. Install a VM running Ubuntu trusty 14.04.5 LTS x86_64. Allocate 32GB of disk.
 	2. $sudo apt-get install git cmake g++ binutils-dev
 	3. $export BASE_DIR=/whereever/you/want
 	4. $cd $BASE_DIR
