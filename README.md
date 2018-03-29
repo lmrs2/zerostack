@@ -331,7 +331,7 @@ __attr_zerostack int main(int argc, char **argv)
 ```c
 #pragma once
 
-// sensitive functions to zero stack
+// sensitive functions to zero stack/registers
 #define __attr_zerostack __attribute__((annotate("SENSITIVE")))
 
 // some annotations for callgraph
@@ -351,7 +351,7 @@ extern __attr_hash_init void sha512_init(char *b, size_t len);
 	// this generates:
 	//	1. a file /tmp/metafile_pass.machine which contains callgraph info with registers and stack amount used
 	// 	2. a binary with code to zero stack and registers. However which registers to zero and what amount of stack to zero is done
-	// separately. This is because LLVM backend does not suppot module pass, so it only sees functions one at a time and cannot
+	// separately. This is because LLVM backend does not support module passes, so it only sees functions one at a time and cannot
 	// determine the call graph to compute the stack usage. The metafiles you saw earlier have this information instead; and the following python script
 	// patches the binary
 	$python $BASE_DIR/zerostack-callgraph/examples/fpointer/patchme.py --help
