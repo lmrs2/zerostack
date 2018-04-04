@@ -20,8 +20,7 @@ Download, compile and install Clang/LLVM (function-based implementation):
 	$cd llvm/tools
 	$git clone https://github.com/lmrs2/clang.git -b zerostack_38 --single-branch --depth 1 
 	$cd ..
-	$mkdir build
-	$cd build
+	$mkdir build && cd build
 	$cmake -DLLVM_BINUTILS_INCDIR=/usr/include -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Debug -DLLVM_TARGETS_TO_BUILD="X86" ../
 	$cmake --build .
 	$sudo make install
@@ -184,7 +183,7 @@ int main(int argc, char * argv[]) {
 	// Compile as
 	$musl-clang stack-based-main.c -o stack-based-main
 	$./stack-based-main
-	// functions marked as \_\_sensitive zero registers and stack before the return instruction
+	// functions marked as __sensitive zero registers and stack before the return instruction
 	// all functions keep track of the stack usage - but do not erase it
 	$objdump -d stack-based-main
 
