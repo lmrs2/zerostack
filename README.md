@@ -192,9 +192,6 @@ Now let's try the callgraph-based implementation.
 Install Gold linker (needed for LTO -- see http://llvm.org/docs/GoldPlugin.html):
 --------------------------------------------------------------------------------
 	cd $BASE_DIR
-
-	$sudo apt-get install texinfo bison flex
-
 	// On Ubuntu Trusty (14.04), it is part of binutils package. If you followed the preliminary steps and installed binutils-dev, it should already be installed. Test it:
 	$ld --version | grep -i gold
 	// You can also try passing the -plugin option as:
@@ -213,8 +210,7 @@ Install python module dependencies:
 	$git clone https://github.com/isislab/dispatch.git
 	$cd dispatch
 	$sudo python setup.py install
-	// if the capstone installation fails, then do this instead
-	// or if you know a cleaner way to install dispatch, go ahead and let me know :)
+	// if the keystone installation fails, ignore it: we don't need it anyway
 	$sudo pip install capstone
 
 Download, compile and install additional passes:
@@ -246,8 +242,7 @@ Re-Configure, compile and install compiler_rt:
 	$cd $BUILTIN_BUILD
 	$rm -rf *
 	$cmake -DCMAKE_C_COMPILER="clang" -DCMAKE_RANLIB:FILEPATH=`llvm-config --bindir`/llvm-ranlib -DCMAKE_AR:FILEPATH=`llvm-config --bindir`/llvm-ar -DCMAKE_C_FLAGS="-fPIC -flto -Wimplicit-function-declaration -Werror" -DCOMPILER_RT_BUILD_SANITIZERS=OFF ../compiler-rt
-	$make
-	$sudo make install
+	$make && sudo make install
 
 Recompile Clang/LLVM for libc:
 ----------------------------------
@@ -356,5 +351,5 @@ extern __attr_hash_init void sha512_init(char *b, size_t len);
 	$python $BASE_DIR/zerostack-callgraph/examples/fpointer/patchme.py --help
 	$python $BASE_DIR/zerostack-callgraph/examples/fpointer/patchme.py --inobject=callgraph-based-main-unpatched --outobject=callgraph-based-main-patched --inmetafiles=/usr/local/musl/metafiles/musl-libc-machine.mt,/tmp/metafile_pass.machine --libc=musl --platform=x86_64 --signal-stack-use=4096 --bulk-register-zeroing
 	$./callgraph-based-main-patched
-	$ovjdump -d callgraph-based-main-patched
+	$objdump -d callgraph-based-main-patched
 
