@@ -2,7 +2,7 @@ zerostack: Zeroing stack and registers of sensitive functions
 =============================================================
 This project contains Clang/LLVM patches/passes to zero the stack and registers of sensitive functions. There are 
 3 solutions implemented, as per the paper "What you get is what you C: Controlling side effects in mainstream C compilers", 
-available [here](https://github.com/lmrs2/secretgrind). The code is a reference implementation, and is not supposed to be production ready. Nevertheless, 
+available [here](https://drive.google.com/file/d/1jsOolD1C_Fu9oNVvhkB1_RQ9GlrFSGcN/view). The code is a reference implementation, and is not supposed to be production ready. Nevertheless, 
 this should be ebough for anyone who wants to test it.
 
 The setup below was tested on Ubuntu trusty 14.04.5 LTS x86_64. I suggest you install this as a VM before reading further.
